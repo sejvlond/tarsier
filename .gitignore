@@ -1,0 +1,7 @@
+*.swo
+*.swp
+/vendor
+/tarsier
+/todo
+/logs
+/secrets

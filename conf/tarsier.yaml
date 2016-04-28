@@ -1,0 +1,26 @@
+server:
+    public:
+        port: 8888
+        use_https: false
+    service:
+        port: 9999
+        use_https: false # TODO true
+        cert_file: "./secrets/server.pem"
+        key_file: "./secrets/server.key"
+logging:
+    name: "Tarsier"
+    interval: 3600
+    dir: "./logs/"
+
+consul:
+    service: "tarsier"
+    url: "http://172.17.0.2:8500"
+    register: "/v1/agent/service/register"
+    deregister: "/v1/agent/service/deregister/%s"
+    list: "/v1/catalog/service/%s?passing"
+    check_interval: "15s"
+    refresh_interval: "5s"
+
+plugins:
+    persistent_storage:
+        base_dir: "./tmp"

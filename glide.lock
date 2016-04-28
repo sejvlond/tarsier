@@ -1,0 +1,63 @@
+hash: 32b2d99348889fd8bbec323ff1ac6d7a600cfe2c3ee1a6a01894fcf6cb119435
+updated: 2016-04-28T16:52:39.586550134+02:00
+imports:
+- name: github.com/beorn7/perks
+  version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
+  subpackages:
+  - quantile
+- name: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  subpackages:
+  - spew
+- name: github.com/docopt/docopt-go
+  version: 784ddc588536785e7299f7272f39101f7faccc3f
+- name: github.com/edsrzf/mmap-go
+  version: 903d080718bd2877583fe1bd0a19c9cd3e2906ff
+- name: github.com/golang/protobuf
+  version: 7cc19b78d562895b13596ddce7aafb59dd789318
+  subpackages:
+  - proto
+- name: github.com/golang/snappy
+  version: ec642410cd033af63620b66a91ccbd3c69c2c59a
+- name: github.com/matttproud/golang_protobuf_extensions
+  version: c12348ce28de40eed0136aa2b644d0ee0650e56c
+  subpackages:
+  - pbutil
+- name: github.com/prometheus/client_golang
+  version: 90c15b5efa0dc32a7d259234e02ac9a99e6d3b82
+  subpackages:
+  - prometheus
+- name: github.com/prometheus/client_model
+  version: fa8ad6fec33561be4280a8f0514318c79d7f6cb6
+  subpackages:
+  - go
+- name: github.com/prometheus/common
+  version: 40456948a47496dc22168e6af39297a2f8fbf38c
+  subpackages:
+  - expfmt
+  - internal/bitbucket.org/ww/goautoneg
+  - model
+- name: github.com/prometheus/procfs
+  version: abf152e5f3e97f2fafac028d2cc06c1feb87ffa5
+- name: github.com/sejvlond/go-kafkalog
+  version: 8ed6c0bca85daa5aa01a0bf129bebbec3eed61e2
+  subpackages:
+  - common
+  - writer
+  - encoder
+  - writer/iowriter
+- name: github.com/sejvlond/kafkalog-logrus
+  version: ba0c1bf24fe938bf9f52c9e3fe03328148938079
+- name: github.com/Sirupsen/logrus
+  version: cd7d1bbe41066b6c1f19780f895901052150a575
+- name: github.com/stretchr/testify
+  version: c5d7a69bf8a2c9c374798160849c071093e41dd1
+  subpackages:
+  - assert
+- name: golang.org/x/sys
+  version: c8bc69bc2db9c57ccf979550bc69655df5039a8a
+  subpackages:
+  - unix
+- name: gopkg.in/yaml.v2
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
+devImports: []

@@ -1,0 +1,16 @@
+package: github.com/sejvlond/tarsier
+import:
+- package: github.com/Sirupsen/logrus
+- package: github.com/davecgh/go-spew
+  subpackages:
+  - spew
+- package: github.com/docopt/docopt-go
+- package: github.com/edsrzf/mmap-go
+- package: github.com/prometheus/client_golang
+  subpackages:
+  - prometheus
+- package: github.com/sejvlond/kafkalog-logrus
+- package: gopkg.in/yaml.v2
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert

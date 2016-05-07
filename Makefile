@@ -1,3 +1,5 @@
+IMAGE=sejvlond/tarsier
+
 tarsier:
 	docker run \
     	--rm \
@@ -6,10 +8,10 @@ tarsier:
 	    github.com/sejvlond/tarsier
 
 build: tarsier
-	docker build -t sejvlond/tarsier .
+	docker build -t ${IMAGE} .
 
 push: build
-	docker push sejvlond/tarsier
+	docker push ${IMAGE}
 
 run:
 	docker run \
@@ -19,7 +21,7 @@ run:
 		-v `pwd`/logs:/www/tarsier/logs \
 		-v `pwd`/tmp:/www/tarsier/tmp \
 		-P \
-		sejvlond/tarsier
+		${IMAGE}
 
 clean:
 	sudo rm tarsier

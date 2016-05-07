@@ -29,6 +29,10 @@ func NewServer(lgr LOGGER, cfg *ServerConfig,
 	commander *Commander, consul *Consul, shutdownFunc func(),
 	shutdownChan chan struct{}, wg *sync.WaitGroup) (*Server, error) {
 
+	metrics, err := NewMetrics()
+	if err != nil {
+		return nil, err
+	}
 	server := &Server{
 		lgr:          lgr,
 		wg:           wg,
@@ -37,7 +41,7 @@ func NewServer(lgr LOGGER, cfg *ServerConfig,
 		CallShutdown: shutdownFunc,
 		mux:          http.NewServeMux(),
 		serviceMux:   http.NewServeMux(),
-		metrics:      NewMetrics(),
+		metrics:      metrics,
 	}
 	if err := server.InitHandlers(commander, consul); err != nil {
 		return nil, err
@@ -45,6 +49,10 @@ func NewServer(lgr LOGGER, cfg *ServerConfig,
 	return server, nil
 }
 
+// registerHandler calls Handler.Init function with special logger (with
+// handler name obtain from Handler reflection) and register handler to mux
+// and returns true when successfull. Otherwise false is returned and
+// error is saved to *error
 func registerHandler(err *error, lgr LOGGER, mux *http.ServeMux,
 	query string, handler Handler, args ...interface{}) bool {
 
@@ -61,17 +69,21 @@ func registerHandler(err *error, lgr LOGGER, mux *http.ServeMux,
 
 func (s *Server) InitHandlers(commander *Commander, consul *Consul) error {
 	err := new(error)
+	// publicHandler is function that registers handlers to public serveMux
 	publicHandler := func(
 		query string,
 		handler Handler, args ...interface{}) bool {
 		return registerHandler(err, s.lgr, s.mux, query, handler, args...)
 	}
+	// serviceHandler is function that registers handles to service serveMux
 	serviceHandler := func(
 		query string,
 		handler Handler, args ...interface{}) bool {
 		return registerHandler(err, s.lgr, s.serviceMux, query, handler, args...)
 	}
 
+	// registering handler - when first one fails, others are skipeed and error
+	// is set properly
 	_ = true &&
 		publicHandler(
 			"/exec",
@@ -166,10 +178,16 @@ func (s *Server) Run() {
 	}
 
 	if listener != nil {
-		listener.Close()
+		err := listener.Close()
+		if err != nil {
+			s.lgr.Errorf("Error closing listener '%v'", err)
+		}
 	}
 	if serviceListener != nil {
-		serviceListener.Close()
+		err := serviceListener.Close()
+		if err != nil {
+			s.lgr.Errorf("Error closing service listener '%v'", err)
+		}
 	}
 	s.wg.Done()
 	s.lgr.Infof("stopped")

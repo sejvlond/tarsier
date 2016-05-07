@@ -70,12 +70,29 @@ func (h *CommandServiceHandler) ServeHTTP(w http.ResponseWriter, r *http.Request
 		http.Error(w, "", http.StatusMethodNotAllowed)
 		return
 	}
+	var err error
 	for _, command := range h.commander.Commands {
-		w.Write([]byte("<h1>"))
-		w.Write([]byte(command.Name()))
-		w.Write([]byte("</h1><p>"))
-		w.Write([]byte(command.Description()))
-		w.Write([]byte("</p>"))
+		if _, err = w.Write([]byte("<h1>")); err != nil {
+			break
+		}
+		if _, err = w.Write([]byte(command.Name())); err != nil {
+			break
+		}
+		if _, err = w.Write([]byte("</h1><p>")); err != nil {
+			break
+		}
+		if _, err = w.Write([]byte(command.Description())); err != nil {
+			break
+		}
+		if _, err = w.Write([]byte("</p>")); err != nil {
+			break
+		}
+	}
+	if err != nil {
+		h.lgr.Errorf("Error writing to response writer: '%v'", err)
+		http.Error(w, "Error writing to response writer",
+			http.StatusInternalServerError)
+		return
 	}
 }
 
@@ -99,8 +116,25 @@ func (h *MemStatsHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", http.StatusMethodNotAllowed)
 		return
 	}
-	w.Write([]byte("<h1>MemStats</h1><pre>"))
-	runtime.ReadMemStats(&h.stats)
-	w.Write([]byte(spew.Sdump(h.stats)))
-	w.Write([]byte("</pre>"))
+
+	var err error
+	for {
+		if _, err = w.Write([]byte("<h1>MemStats</h1><pre>")); err != nil {
+			break
+		}
+		runtime.ReadMemStats(&h.stats)
+		if _, err = w.Write([]byte(spew.Sdump(h.stats))); err != nil {
+			break
+		}
+		if _, err = w.Write([]byte("</pre>")); err != nil {
+			break
+		}
+		break
+	}
+	if err != nil {
+		h.lgr.Errorf("Error writing to response writer: '%v'", err)
+		http.Error(w, "Error writing to response writer",
+			http.StatusInternalServerError)
+		return
+	}
 }

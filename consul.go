@@ -112,7 +112,12 @@ func (c *Consul) Register() error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		if err != nil {
+			c.lgr.Errorf("Error while closing response body: '%v'", err)
+		}
+	}()
 	if resp.StatusCode != 200 {
 		return fmt.Errorf("Register returns %v != 200", resp.StatusCode)
 	}
@@ -130,7 +135,12 @@ func (c *Consul) Refresh() {
 		c.lgr.Errorf("Error refreshing buddies list: get '%v'", err)
 		return
 	}
-	defer resp.Body.Close()
+	defer func() {
+		err = resp.Body.Close()
+		if err != nil {
+			c.lgr.Errorf("Error while closing response body: '%v'", err)
+		}
+	}()
 	body, err := ioutil.ReadAll(resp.Body)
 	err = json.Unmarshal(body, &c.buddies)
 	if err != nil {

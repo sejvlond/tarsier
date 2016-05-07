@@ -1,0 +1,7 @@
+topics:
+    tarsier:
+        topic: tarsier-dbg
+        type: kafkalog
+        broker: kafka
+        retention: 24h
+        ack: -1

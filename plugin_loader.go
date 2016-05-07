@@ -8,4 +8,5 @@ import (
 	_ "github.com/sejvlond/tarsier/plugins/heavy_load"
 	_ "github.com/sejvlond/tarsier/plugins/net"
 	_ "github.com/sejvlond/tarsier/plugins/persistent_storage"
+	_ "github.com/sejvlond/tarsier/plugins/sleeping_beauty"
 )

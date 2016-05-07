@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"sync"
 
 	"gopkg.in/yaml.v2"
 )
@@ -59,8 +60,16 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(r.Body)
-	defer r.Body.Close()
+	if _, err := buf.ReadFrom(r.Body); err != nil {
+		h.lgr.Errorf("Error reading from request body: '%v'", err)
+		http.Error(w, "Invalid request body", http.StatusInternalServerError)
+	}
+	defer func() {
+		err := r.Body.Close()
+		if err != nil {
+			h.lgr.Errorf("Error while closing request body: '%v'", err)
+		}
+	}()
 	cmdReq := CommandRequest{}
 	err := yaml.Unmarshal(buf.Bytes(), &cmdReq)
 	if err != nil {
@@ -68,11 +77,18 @@ func (h *CommandHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid request data", http.StatusBadRequest)
 		return
 	}
-	go h.wave(&cmdReq)
-	h.exec(w, &cmdReq)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go h.wave(w, &cmdReq, &wg)
+	wg.Add(1)
+	go h.exec(w, &cmdReq, &wg)
+	wg.Wait()
 }
 
-func (h *CommandHandler) wave(cmdReq *CommandRequest) {
+func (h *CommandHandler) wave(w http.ResponseWriter, cmdReq *CommandRequest,
+	wg *sync.WaitGroup) {
+
+	defer wg.Done()
 	if cmdReq.Wave.Remains <= 0 {
 		return
 	}
@@ -94,7 +110,9 @@ func (h *CommandHandler) wave(cmdReq *CommandRequest) {
 		bCnt -= len(buddies)
 		for _, buddy := range buddies {
 			// send wave in goroutine and do not wait for it
+			wg.Add(1)
 			go func() {
+				defer wg.Done()
 				buf := bytes.NewReader(b)
 				resp, err := h.client.Post(
 					fmt.Sprintf("%v:%v/exec", buddy.Address, buddy.Port),
@@ -105,15 +123,29 @@ func (h *CommandHandler) wave(cmdReq *CommandRequest) {
 					return
 				}
 				data, _ := ioutil.ReadAll(resp.Body)
-				resp.Body.Close()
-				h.lgr.Infof("Response from buddy %v:%v is '%v'",
+				err = resp.Body.Close()
+				if err != nil {
+					h.lgr.Errorf("Error while closing response body: '%v'", err)
+				}
+				h.lgr.Infof("Response from buddy %v:%v is '%s'",
 					buddy.Address, buddy.Port, string(data))
+
+				_, err = w.Write([]byte(fmt.Sprintf(
+					"Buddy %v:%v says: %v", buddy.Address, buddy.Port,
+					string(data))))
+				if err != nil {
+					h.lgr.Errorf("Writing command output from buddy %v:%v"+
+						"failed '%v'", buddy.Address, buddy.Port, err)
+				}
 			}()
 		}
 	}
 }
 
-func (h *CommandHandler) exec(w http.ResponseWriter, cmdReq *CommandRequest) {
+func (h *CommandHandler) exec(w http.ResponseWriter, cmdReq *CommandRequest,
+	wg *sync.WaitGroup) {
+
+	defer wg.Done()
 	var out string
 	var err error
 	if out, err = h.commander.Execute(cmdReq.Command, cmdReq.Data); err != nil {
@@ -130,7 +162,7 @@ func (h *CommandHandler) exec(w http.ResponseWriter, cmdReq *CommandRequest) {
 		return
 	}
 	h.metrics.Commands.WithLabelValues(cmdReq.Command, "true").Inc()
-	_, err = w.Write([]byte(out))
+	_, err = w.Write([]byte(out + "\n"))
 	if err != nil {
 		h.lgr.Errorf("Writing command output '%v' failed '%v'", out, err)
 		http.Error(w, fmt.Sprintf("Writing command output '%v' failed '%v'",
